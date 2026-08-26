@@ -51,3 +51,18 @@ li {
     border-radius: 5px;
 }
 
+/* UI Improvements */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+}
+
+button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
