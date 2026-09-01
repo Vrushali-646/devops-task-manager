@@ -1,0 +1,20 @@
+{
+  "name": "devops-task-manager",
+  "version": "1.0.0",
+  "description": "DevOps Task Manager Web Application with status tracking and CRUD operations",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "build": "node build.js",
+    "test": "echo \"No tests defined yet\""
+  },
+  "keywords": [
+    "devops",
+    "task-manager",
+    "web-application"
+  ],
+  "author": "Student",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
