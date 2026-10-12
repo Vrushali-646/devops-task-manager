@@ -1,0 +1,19 @@
+# ==============================================================================
+# Kubernetes Service Manifest: devops-task-manager-service
+# Rubric 4.4 Demonstration: Exposing Pods using LoadBalancer / NodePort
+# ==============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-task-manager-service
+  labels:
+    app: devops-task-manager
+spec:
+  type: LoadBalancer
+  selector:
+    app: devops-task-manager
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 30080
+    name: http

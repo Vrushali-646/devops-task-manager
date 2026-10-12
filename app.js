@@ -12,12 +12,39 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
+let requestCount = 0;
+const startTime = Date.now();
+
 // Create HTTP server
 const server = http.createServer((req, res) => {
+    requestCount++;
+
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Prometheus metrics endpoint
+    if (req.url === '/metrics' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4' });
+        const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const mem = process.memoryUsage();
+        res.end(
+`# HELP app_http_requests_total Total number of HTTP requests received
+# TYPE app_http_requests_total counter
+app_http_requests_total ${requestCount}
+
+# HELP app_uptime_seconds Application uptime in seconds
+# TYPE app_uptime_seconds counter
+app_uptime_seconds ${uptimeSeconds}
+
+# HELP app_memory_heap_used_bytes Process heap memory used in bytes
+# TYPE app_memory_heap_used_bytes gauge
+app_memory_heap_used_bytes ${mem.heapUsed}
+`
+        );
+        return;
+    }
 
     // Handle API endpoints (can be extended for future features)
     if (req.url === '/api/tasks' && req.method === 'GET') {
