@@ -31,34 +31,12 @@ pipeline {
             }
         }
 
-        stage('3. Docker Containerization') {
+        stage('3. Docker Containerization & K8s Deployment') {
             steps {
                 echo '=================================================='
-                echo 'Building and tagging Docker container image'
+                echo 'Building Docker Image and Deploying to Kubernetes'
                 echo '=================================================='
-                bat 'wsl docker build -t devops-task-manager:latest .'
-                bat 'wsl docker images | grep devops-task-manager'
-            }
-        }
-
-        stage('4. Deploy to Kubernetes') {
-            steps {
-                echo '=================================================='
-                echo 'Applying Kubernetes manifests (Deployment & Service)'
-                echo '=================================================='
-                bat 'wsl kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml'
-                bat 'wsl kubectl rollout restart deployment devops-task-manager'
-                bat 'wsl kubectl rollout status deployment devops-task-manager --timeout=60s'
-            }
-        }
-
-        stage('5. Health & Pod Verification') {
-            steps {
-                echo '=================================================='
-                echo 'Verifying running Pods and LoadBalancer endpoints'
-                echo '=================================================='
-                bat 'wsl kubectl get pods -l app=devops-task-manager -o wide'
-                bat 'wsl kubectl get svc devops-task-manager-service'
+                bat 'curl.exe -m 120 -s -N http://172.28.172.214:9999/deploy'
             }
         }
     }
