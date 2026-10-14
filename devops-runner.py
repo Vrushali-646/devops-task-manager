@@ -4,7 +4,11 @@ import os
 import socket
 
 PORT = 9999
-WORKSPACE = '/mnt/c/ProgramData/Jenkins/.jenkins/workspace/task-manager-build'
+CANDIDATE_WORKSPACES = [
+    '/mnt/c/ProgramData/Jenkins/.jenkins/workspace/cie-1',
+    '/mnt/c/ProgramData/Jenkins/.jenkins/workspace/task-manager-build',
+    '/mnt/c/Users/Vrushali Patil/OneDrive/Desktop/devops-task-manager'
+]
 
 class DeployHandler(http.server.BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -12,13 +16,25 @@ class DeployHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.path in ['/health', '/ping']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(b'OK\n')
+            return
         self.handle_deploy()
 
     def do_POST(self):
         self.handle_deploy()
 
     def handle_deploy(self):
-        if not os.path.exists(WORKSPACE):
+        workspace = None
+        for path in CANDIDATE_WORKSPACES:
+            if os.path.exists(path) and os.path.exists(os.path.join(path, 'Dockerfile')):
+                workspace = path
+                break
+
+        if not workspace:
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b'Workspace directory not found!\n')
@@ -32,12 +48,12 @@ class DeployHandler(http.server.BaseHTTPRequestHandler):
             'echo "========================================================"',
             'echo "[CI/CD STAGE 3] Building Docker Container Image"',
             'echo "========================================================"',
-            f'cd "{WORKSPACE}" && docker build -t devops-task-manager:latest .',
+            f'cd "{workspace}" && docker build -t devops-task-manager:latest .',
             'echo ""',
             'echo "========================================================"',
             'echo "[CI/CD STAGE 4] Deploying to Kubernetes Cluster"',
             'echo "========================================================"',
-            f'cd "{WORKSPACE}" && kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml',
+            f'cd "{workspace}" && kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml',
             'kubectl rollout restart deployment devops-task-manager',
             'kubectl rollout status deployment devops-task-manager --timeout=60s',
             'echo ""',
@@ -68,6 +84,14 @@ class DeployHandler(http.server.BaseHTTPRequestHandler):
 
 class DualStackServer(http.server.ThreadingHTTPServer):
     address_family = socket.AF_INET6
+    daemon_threads = True
+
+    def server_bind(self):
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        except (AttributeError, OSError):
+            pass
+        super().server_bind()
 
 if __name__ == '__main__':
     server = DualStackServer(('::', PORT), DeployHandler)
